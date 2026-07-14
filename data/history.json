@@ -1,0 +1,46 @@
+{
+  "events": [
+    {
+      "id": "zunyi_meeting",
+      "title": "遵义会议",
+      "date": "1935年1月15日至17日",
+      "location": "贵州遵义",
+      "description": "中共中央政治局扩大会议，确立了毛泽东在红军和中共中央的领导地位，在极其危急的情况下挽救了党，挽救了红军，挽救了中国革命。",
+      "significance": "中国共产党历史上生死攸关的转折点",
+      "details": "会议通过了毛泽东为中央政治局常委，取消博古、李德的最高军事指挥权，确立了毛泽东在红军和中共中央的领导地位。",
+      "coordinates": {
+        "lat": 27.7256,
+        "lng": 106.9271
+      },
+      "relatedFigures": ["maozedong", "zhouenlai", "zhude"]
+    },
+    {
+      "id": "four_crossings",
+      "title": "四渡赤水",
+      "date": "1935年1月19日 - 3月22日",
+      "location": "贵州、四川、云南交界",
+      "description": "中央红军在长征途中，处于国民党几十万重兵围追堵截的危急条件下，进行的四次渡赤水河战役。",
+      "significance": "毛泽东军事生涯中的'得意之笔'，体现了红军机动灵活的战略战术",
+      "details": "红军在运动中采取高度机动的运动战方针，穿插于国民党军重兵集团之间，有效地调动和迷惑敌人，最终摆脱了敌军的围追堵截。",
+      "coordinates": {
+        "lat": 28.0,
+        "lng": 106.5
+      },
+      "relatedFigures": ["maozedong", "zhouenlai"]
+    },
+    {
+      "id": "long_march_guizhou",
+      "title": "红军长征过贵州",
+      "date": "1934年12月 - 1936年3月",
+      "location": "贵州全境",
+      "description": "中央红军和红二、六军团长征途经贵州，留下了丰富的革命遗迹和宝贵的精神财富。",
+      "significance": "贵州是长征途中停留时间最长、活动范围最广的省份",
+      "details": "红军转战贵州60多个县，足迹遍及黔东、黔北、黔西、黔西南地区，在贵州召开了具有历史意义的遵义会议。",
+      "coordinates": {
+        "lat": 26.6470,
+        "lng": 106.6302
+      },
+      "relatedFigures": ["maozedong", "zhouenlai", "zhude", "helong"]
+    }
+  ]
+}

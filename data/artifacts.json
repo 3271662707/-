@@ -1,0 +1,52 @@
+{
+  "artifacts": [
+    {
+      "id": "red_army_flag",
+      "name": "红军战旗",
+      "era": "1934-1936",
+      "material": "布料",
+      "dimensions": "120cm x 80cm",
+      "description": "红军长征时期使用的战旗，见证了红军战士的英勇奋战。",
+      "historicalValue": "这面战旗伴随着红军转战贵州，经历了无数次战斗，是红军英勇精神的象征。",
+      "location": "遵义会议纪念馆",
+      "modelType": "flag",
+      "color": "#C8102E"
+    },
+    {
+      "id": "military_map",
+      "name": "军事地图",
+      "era": "1935",
+      "material": "纸质",
+      "dimensions": "80cm x 60cm",
+      "description": "红军长征使用的军事地图，标注了行军路线和战略要点。",
+      "historicalValue": "这张地图记录了红军在贵州的战略转移路线，是研究长征历史的重要文物。",
+      "location": "遵义会议纪念馆",
+      "modelType": "map",
+      "color": "#CD7F32"
+    },
+    {
+      "id": "oil_lamp",
+      "name": "马灯",
+      "era": "1935",
+      "material": "金属、玻璃",
+      "dimensions": "高30cm",
+      "description": "遵义会议期间使用的马灯，见证了这一历史性时刻。",
+      "historicalValue": "这盏马灯陪伴会议代表们度过了三个日夜，照亮了中国革命的前进道路。",
+      "location": "遵义会议会址",
+      "modelType": "lamp",
+      "color": "#FFD700"
+    },
+    {
+      "id": "rifle",
+      "name": "红军步枪",
+      "era": "1934-1936",
+      "material": "钢铁、木材",
+      "dimensions": "长110cm",
+      "description": "红军战士使用的步枪，是长征途中的重要武器。",
+      "historicalValue": "这支步枪伴随着红军战士走过二万五千里长征，是革命武装斗争的实物见证。",
+      "location": "贵州革命历史纪念馆",
+      "modelType": "rifle",
+      "color": "#4A4A4A"
+    }
+  ]
+}

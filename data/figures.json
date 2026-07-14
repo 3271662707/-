@@ -1,0 +1,59 @@
+{
+  "figures": [
+    {
+      "id": "maozedong",
+      "name": "毛泽东",
+      "birthYear": 1893,
+      "deathYear": 1976,
+      "title": "伟大的马克思主义者",
+      "bio": "中国共产党、中国人民解放军、中华人民共和国的主要缔造者，党的第一代中央领导集体的核心。",
+      "guizhouConnection": "在遵义会议上确立了在红军和中共中央的领导地位，指挥了四渡赤水等经典战役。",
+      "quotes": [
+        "星星之火，可以燎原",
+        "枪杆子里面出政权",
+        "红军不怕远征难，万水千山只等闲"
+      ],
+      "events": ["zunyi_meeting", "four_crossings", "long_march_guizhou"]
+    },
+    {
+      "id": "zhouenlai",
+      "name": "周恩来",
+      "birthYear": 1898,
+      "deathYear": 1976,
+      "title": "伟大的无产阶级革命家",
+      "bio": "中国共产党、中国人民解放军、中华人民共和国的主要缔造者之一，伟大的无产阶级革命家、政治家、军事家、外交家。",
+      "guizhouConnection": "在遵义会议上支持毛泽东的正确主张，为确立毛泽东的领导地位发挥了重要作用。",
+      "quotes": [
+        "为中华之崛起而读书",
+        "我们爱我们的民族，这是我们自信心的泉源"
+      ],
+      "events": ["zunyi_meeting", "four_crossings", "long_march_guizhou"]
+    },
+    {
+      "id": "zhude",
+      "name": "朱德",
+      "birthYear": 1886,
+      "deathYear": 1976,
+      "title": "伟大的无产阶级革命家",
+      "bio": "中国共产党、中国人民解放军和中华人民共和国的主要缔造者之一，伟大的无产阶级革命家、政治家和军事家。",
+      "guizhouConnection": "在遵义会议上支持毛泽东的正确主张，与毛泽东一起指挥红军取得四渡赤水的胜利。",
+      "quotes": [
+        "革命到底，永不叛变"
+      ],
+      "events": ["zunyi_meeting", "four_crossings", "long_march_guizhou"]
+    },
+    {
+      "id": "helong",
+      "name": "贺龙",
+      "birthYear": 1896,
+      "deathYear": 1969,
+      "title": "伟大的无产阶级革命家",
+      "bio": "中国人民解放军的创建者之一，伟大的无产阶级革命家、军事家。",
+      "guizhouConnection": "率领红二方面军长征途经贵州，在黔东地区开展革命活动。",
+      "quotes": [
+        "我贺龙就是为劳苦大众打天下的"
+      ],
+      "events": ["long_march_guizhou"]
+    }
+  ]
+}
