@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>四渡赤水·运动战模拟器</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'SimHei', sans-serif; overflow: hidden; }
+        #map { width: 100vw; height: 100vh; z-index: 1; }
+
+        /* 指挥氛围 */
+        #commanderPanel {
+            position: absolute; top: 10px; right: 10px;
+            display: flex; gap: 12px; z-index: 1000;
+        }
+        .commander { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .commander-portrait {
+            width: 56px; height: 56px; border-radius: 50%;
+            border: 3px solid; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; background: rgba(255,255,255,0.92);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .mao { border-color: #C82829; }
+        .chiang { border-color: #2C3E50; }
+        .commander-name { font-size: 11px; color: #fff; background: rgba(0,0,0,0.5); padding: 1px 6px; border-radius: 4px; }
+        .speech-bubble {
+            position: relative; background: rgba(255,255,255,0.95);
+            padding: 6px 10px; border-radius: 8px; font-size: 12px;
+            max-width: 140px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center;
+        }
+        .speech-bubble.show { opacity: 1; }
+        .speech-bubble::after {
+            content: ''; position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+            border: 4px solid transparent; border-top-color: rgba(255,255,255,0.95);
+        }
+
+        /* 游戏状态栏 */
+        #statusBar {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.7); color: #fff; padding: 10px 14px;
+            border-radius: 8px; font-size: 13px; z-index: 1000;
+            backdrop-filter: blur(4px); min-width: 160px;
+        }
+        #statusBar .label { color: #aaa; font-size: 11px; }
+        #statusBar .value { font-weight: bold; }
+        #statusBar .sep { height: 1px; background: rgba(255,255,255,0.15); margin: 6px 0; }
+
+        /* 知识卡片触发器 */
+        #cardTrigger {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 52px; height: 52px; background: rgba(230,126,34,0.92);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 26px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0; transition: opacity 0.3s, transform 0.2s; z-index: 1000;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        #cardTrigger.show { opacity: 1; }
+        #cardTrigger:hover { transform: scale(1.1); }
+
+        /* 知识卡片 */
+        #knowledgeCard {
+            position: absolute; bottom: 85px; right: 20px;
+            width: 340px; background: rgba(255,255,255,0.97);
+            border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none; z-index: 2000; overflow: hidden;
+        }
+        #knowledgeCard.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .card-header {
+            padding: 12px 16px; color: white;
+            font-size: 15px; font-weight: bold;
+        }
+        .card-header.orange { background: linear-gradient(135deg, #E67E22, #D35400); }
+        .card-header.blue { background: linear-gradient(135deg, #3498DB, #2980B9); }
+        .card-body { padding: 14px; }
+        .card-section { margin-bottom: 10px; padding: 10px; border-radius: 6px; }
+        .card-section:last-child { margin-bottom: 0; }
+        .card-section.intel { background: #EBF5FB; border-left: 4px solid #3498DB; }
+        .card-section.decision { background: #FDEBD0; border-left: 4px solid #E67E22; }
+        .card-section.insight { background: #F4F6F7; border-left: 4px solid #95A5A6; }
+        .card-section .sec-title { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #2C3E50; }
+        .card-section .sec-content { font-size: 13px; line-height: 1.5; color: #34495E; }
+        .card-close {
+            position: absolute; top: 8px; right: 10px; background: none; border: none;
+            color: white; font-size: 18px; cursor: pointer; opacity: 0.7;
+        }
+        .card-close:hover { opacity: 1; }
+
+        /* 触屏控制 */
+        #touchControls {
+            position: absolute; bottom: 20px; left: 20px;
+            display: none; z-index: 1000;
+        }
+        .dpad { display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 54px); gap: 4px; }
+        .dpad-btn {
+            background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px; color: white; font-size: 22px;
+            cursor: pointer; touch-action: manipulation; user-select: none;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .dpad-btn:active { background: rgba(0,0,0,0.85); }
+        .dpad-btn.up { grid-column: 2; grid-row: 1; }
+        .dpad-btn.left { grid-column: 1; grid-row: 2; }
+        .dpad-btn.right { grid-column: 3; grid-row: 2; }
+        .dpad-btn.down { grid-column: 2; grid-row: 3; }
+
+        /* 暂停菜单 */
+        #pauseMenu {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); display: none;
+            align-items: center; justify-content: center; z-index: 3000;
+            backdrop-filter: blur(3px);
+        }
+        #pauseMenu.show { display: flex; }
+        .pause-box {
+            background: #fff; padding: 28px; border-radius: 14px;
+            max-width: 560px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        .pause-title { font-size: 22px; font-weight: bold; margin-bottom: 18px; color: #2C3E50; text-align: center; }
+        .intel-block { margin-bottom: 16px; padding: 14px; background: #FAFAFA; border-radius: 8px; border-left: 4px solid #E67E22; }
+        .intel-block h3 { font-size: 14px; color: #D35400; margin-bottom: 8px; }
+        .intel-block p { font-size: 13px; line-height: 1.6; color: #555; }
+        .pause-btns { display: flex; gap: 12px; margin-top: 20px; }
+        .pbtn {
+            flex: 1; padding: 11px; border: none; border-radius: 8px;
+            font-size: 15px; cursor: pointer; font-weight: bold; transition: filter 0.2s;
+        }
+        .pbtn:hover { filter: brightness(1.1); }
+        .pbtn.green { background: #27AE60; color: #fff; }
+        .pbtn.red { background: #E74C3C; color: #fff; }
+
+        /* 结果弹窗 */
+        #gameResult {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.97); padding: 36px 44px; border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4); text-align: center;
+            display: none; z-index: 4000; max-width: 420px;
+        }
+        #gameResult.show { display: block; }
+        .result-icon { font-size: 48px; margin-bottom: 12px; }
+        .result-title { font-size: 28px; font-weight: bold; margin-bottom: 16px; }
+        .result-title.win { color: #27AE60; }
+        .result-title.lose { color: #E74C3C; }
+        .result-msg { font-size: 14px; line-height: 1.7; color: #555; margin-bottom: 24px; }
+        .result-msg em { color: #27AE60; font-style: normal; font-weight: bold; }
+        .result-btn {
+            padding: 12px 40px; background: #3498DB; color: #fff;
+            border: none; border-radius: 8px; font-size: 15px; cursor: pointer;
+        }
+        .result-btn:hover { background: #2980B9; }
+
+        /* 阶段过渡弹窗 */
+        #stageOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.82); display: none;
+            align-items: center; justify-content: center; z-index: 4500;
+            backdrop-filter: blur(4px);
+        }
+        #stageOverlay.show { display: flex; }
+        .stage-box {
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; padding: 32px 36px; border-radius: 16px;
+            max-width: 520px; width: 90%; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stage-badge {
+            display: inline-block; background: #C82829; color: #fff;
+            padding: 4px 14px; border-radius: 20px; font-size: 13px;
+            font-weight: bold; margin-bottom: 12px;
+        }
+        .stage-title { font-size: 26px; font-weight: bold; margin-bottom: 6px; letter-spacing: 2px; }
+        .stage-subtitle { font-size: 14px; color: #aaa; margin-bottom: 20px; }
+        .stage-divider { height: 1px; background: rgba(255,255,255,0.12); margin: 18px 0; }
+        .stage-history { margin-bottom: 16px; }
+        .stage-history .h-title { font-size: 13px; color: #E67E22; font-weight: bold; margin-bottom: 6px; }
+        .stage-history .h-content { font-size: 14px; line-height: 1.7; color: #ddd; }
+        .stage-history .h-quote {
+            font-size: 13px; color: #aaa; font-style: italic; margin-top: 8px;
+            padding-left: 12px; border-left: 3px solid #E67E22;
+        }
+        .stage-next-info {
+            background: rgba(255,255,255,0.06); padding: 12px 14px;
+            border-radius: 8px; margin-bottom: 20px;
+        }
+        .stage-next-info .n-label { font-size: 12px; color: #888; }
+        .stage-next-info .n-target { font-size: 16px; color: #8E44AD; font-weight: bold; margin-top: 4px; }
+        .stage-continue-btn {
+            display: block; width: 100%; padding: 14px;
+            background: #C82829; color: #fff; border: none;
+            border-radius: 10px; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: background 0.2s, transform 0.1s;
+            letter-spacing: 2px;
+        }
+        .stage-continue-btn:hover { background: #E74C3C; transform: scale(1.02); }
+
+        /* 游戏说明弹窗 */
+        #instructionsOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            align-items: center; justify-content: center; z-index: 5500;
+            backdrop-filter: blur(4px);
+        }
+        #instructionsOverlay.show { display: flex; }
+        .instructions-box {
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; padding: 28px 32px; border-radius: 16px;
+            max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .inst-title { font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 3px; }
+        .inst-divider { height: 1px; background: rgba(255,255,255,0.12); margin: 16px 0; }
+        .inst-section { margin-bottom: 16px; }
+        .inst-section-title { font-size: 14px; color: #E67E22; font-weight: bold; margin-bottom: 6px; }
+        .inst-content { font-size: 13px; line-height: 1.7; color: #ccc; }
+        .inst-confirm-btn {
+            display: block; width: 100%; padding: 14px; margin-top: 20px;
+            background: #C82829; color: #fff; border: none;
+            border-radius: 10px; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: background 0.2s, transform 0.1s;
+            letter-spacing: 2px;
+        }
+        .inst-confirm-btn:hover { background: #E74C3C; transform: scale(1.02); }
+
+        /* 开始界面 */
+        #startScreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 5000; color: #fff; text-align: center;
+        }
+        #startScreen h1 { font-size: 36px; margin-bottom: 8px; letter-spacing: 4px; }
+        #startScreen .subtitle { font-size: 16px; color: #aaa; margin-bottom: 30px; }
+        #startScreen .desc { font-size: 13px; color: #888; max-width: 400px; line-height: 1.7; margin-bottom: 30px; }
+        #startScreen .start-btn {
+            padding: 14px 50px; background: #C82829; color: #fff; border: none;
+            border-radius: 30px; font-size: 18px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 20px rgba(200,40,41,0.4); transition: transform 0.2s;
+        }
+        #startScreen .start-btn:hover { transform: scale(1.05); }
+        #startScreen .hint { font-size: 12px; color: #666; margin-top: 20px; }
+
+        /* 键盘提示 */
+        #kbHint {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.5); color: #aaa; padding: 5px 14px;
+            border-radius: 20px; font-size: 11px; z-index: 1000;
+        }
+
+        /* 自定义地图标记 */
+        .army-marker {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-weight: bold; color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.6);
+            transition: background 0.3s;
+        }
+        .red-marker { background: #C82829; font-size: 12px; }
+        .enemy-marker { background: #2C3E50; font-size: 11px; }
+        .enemy-marker.confused { background: #7F8C8D; }
+
+        .landmark-label {
+            background: rgba(211,84,0,0.85); color: #fff; padding: 3px 8px;
+            border-radius: 4px; font-size: 12px; font-weight: bold;
+            white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        .endpoint-label {
+            background: rgba(39,174,96,0.85); color: #fff; padding: 3px 8px;
+            border-radius: 4px; font-size: 12px; font-weight: bold;
+            white-space: nowrap;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            #touchControls { display: block; }
+            .commander-portrait { width: 44px; height: 44px; font-size: 22px; }
+            .speech-bubble { font-size: 11px; max-width: 110px; }
+            #knowledgeCard { width: calc(100vw - 40px); right: 20px; bottom: 150px; }
+            #statusBar { font-size: 12px; padding: 8px 10px; }
+            #kbHint { display: none; }
+            #startScreen h1 { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 开始界面 -->
+    <div id="startScreen">
+        <h1>四渡赤水</h1>
+        <div class="subtitle">运动战模拟器</div>
+        <div class="desc">
+            1935年，中央红军面对数十万敌军围追堵截，<br>
+            在毛泽东指挥下四次渡过赤水河，<br>
+            以灵活机动的运动战成功摆脱包围。<br><br>
+            <strong>控制红军，在真实地形中穿插机动，<br>
+            调动敌人，掌握主动权！</strong>
+        </div>
+        <button class="start-btn" onclick="showInstructions()">开始指挥</button>
+        <div class="hint">方向键/WASD移动 | P暂停 | 手机触屏操控</div>
+    </div>
+
+    <!-- 游戏说明弹窗 -->
+    <div id="instructionsOverlay">
+        <div class="instructions-box">
+            <div class="inst-title">游戏说明</div>
+            <div class="inst-divider"></div>
+            <div class="inst-section">
+                <div class="inst-section-title">背景</div>
+                <div class="inst-content">1935年，中央红军在毛泽东指挥下，四次渡过赤水河，以灵活机动的运动战摆脱数十万敌军围追堵截。你将扮演红军指挥员，亲历这段历史。</div>
+            </div>
+            <div class="inst-section">
+                <div class="inst-section-title">操作方式</div>
+                <div class="inst-content">
+                    <strong>PC端：</strong>方向键 / WASD 控制移动，P键暂停<br>
+                    <strong>手机端：</strong>点击屏幕方向按钮
+                </div>
+            </div>
+            <div class="inst-section">
+                <div class="inst-section-title">游戏目标</div>
+                <div class="inst-content">
+                    沿红色虚线所示的<strong>历史路线</strong>行进，依次到达四个阶段目标。偏离路线过远将被敌军合围！<br><br>
+                    同时通过快速转向、穿插拉扯，<strong>调动敌军</strong>使其陷入混乱（变灰色），掌握战场主动权。
+                </div>
+            </div>
+            <div class="inst-section">
+                <div class="inst-section-title">四个阶段</div>
+                <div class="inst-content">
+                    一渡赤水 → 土城渡口<br>
+                    扎西整编 → 扎西<br>
+                    二渡赤水 → 遵义<br>
+                    三渡、四渡赤水 → 乌江渡口
+                </div>
+            </div>
+            <div class="inst-section">
+                <div class="inst-section-title">胜负判定</div>
+                <div class="inst-content">
+                    被敌军追上 → 失败<br>
+                    偏离历史路线太远 → 失败<br>
+                    依次完成四个阶段 → 胜利
+                </div>
+            </div>
+            <button class="inst-confirm-btn" onclick="confirmStart()">确认，开始指挥！</button>
+        </div>
+    </div>
+
+    <!-- 地图 -->
+    <div id="map"></div>
+
+    <!-- 指挥氛围 -->
+    <div id="commanderPanel">
+        <div class="commander">
+            <div class="commander-portrait mao">👨‍✈️</div>
+            <div class="commander-name">毛泽东</div>
+            <div class="speech-bubble" id="maoSpeech"></div>
+        </div>
+        <div class="commander">
+            <div class="commander-portrait chiang">👨‍💼</div>
+            <div class="commander-name">蒋介石</div>
+            <div class="speech-bubble" id="chiangSpeech"></div>
+        </div>
+    </div>
+
+    <!-- 状态栏 -->
+    <div id="statusBar">
+        <div><span class="label">当前阶段</span> <span class="value" id="uiStage">一渡赤水</span></div>
+        <div class="sep"></div>
+        <div><span class="label">进度</span> <span class="value" id="uiProgress">1 / 4</span></div>
+        <div class="sep"></div>
+        <div><span class="label">调动敌军</span> <span class="value" id="uiConfused">0 / 1</span></div>
+        <div class="sep"></div>
+        <div><span class="label">暂停</span> <span class="value">P 键</span></div>
+        <div class="sep"></div>
+        <div style="font-size:11px;color:#E74C3C;"><span style="display:inline-block;width:18px;border-top:2px dashed #E74C3C;vertical-align:middle;margin-right:4px;opacity:0.7;"></span>历史路线（勿偏离太远）</div>
+    </div>
+
+    <!-- 知识卡片触发器 -->
+    <div id="cardTrigger">📜</div>
+
+    <!-- 知识卡片 -->
+    <div id="knowledgeCard">
+        <button class="card-close" onclick="closeCard()">✕</button>
+        <div class="card-header" id="cardHeader"></div>
+        <div class="card-body">
+            <div class="card-section intel">
+                <div class="sec-title">📡 情报</div>
+                <div class="sec-content" id="cardIntel"></div>
+            </div>
+            <div class="card-section decision">
+                <div class="sec-title">⚡ 决策</div>
+                <div class="sec-content" id="cardDecision"></div>
+            </div>
+            <div class="card-section insight">
+                <div class="sec-title">🎯 心得</div>
+                <div class="sec-content" id="cardInsight"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 键盘提示 -->
+    <div id="kbHint">方向键 / WASD 移动 | P 暂停</div>
+
+    <!-- 触屏控制 -->
+    <div id="touchControls">
+        <div class="dpad">
+            <button class="dpad-btn up" data-dir="up">▲</button>
+            <button class="dpad-btn left" data-dir="left">◀</button>
+            <button class="dpad-btn right" data-dir="right">▶</button>
+            <button class="dpad-btn down" data-dir="down">▼</button>
+        </div>
+    </div>
+
+    <!-- 暂停菜单 -->
+    <div id="pauseMenu">
+        <div class="pause-box">
+            <div class="pause-title">📋 情报站</div>
+            <div class="intel-block">
+                <h3>四渡赤水背景</h3>
+                <p>1935年1月至3月，中央红军在长征途中，面对国民党数十万大军的围追堵截，在毛泽东的指挥下，四次渡过赤水河，通过灵活机动的运动战，成功摆脱了敌人的包围。这是毛泽东军事指挥的"得意之笔"。</p>
+            </div>
+            <div class="intel-block">
+                <h3>运动战核心思想</h3>
+                <p>运动战的精髓在于"避实击虚"——不与敌人硬拼，而是通过快速机动，调动敌人，使其疲于奔命，在运动中寻找战机。正如毛泽东所说："你打你的，我打我的。"</p>
+            </div>
+            <div class="intel-block">
+                <h3>关键战役</h3>
+                <p><strong>一渡赤水（土城）：</strong>情报失误，主动撤出，西渡赤水<br>
+                <strong>扎西整编：</strong>决定回师东进，二渡赤水<br>
+                <strong>遵义战役：</strong>长征以来最大胜利，歼敌2个师<br>
+                <strong>乌江佯动：</strong>佯攻贵阳，调虎离山，西进云南</p>
+            </div>
+            <div class="pause-btns">
+                <button class="pbtn green" onclick="resumeGame()">继续游戏</button>
+                <button class="pbtn red" onclick="restartGame()">重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 阶段过渡弹窗 -->
+    <div id="stageOverlay">
+        <div class="stage-box">
+            <div class="stage-badge" id="stageBadge">第一阶段完成</div>
+            <div class="stage-title" id="stageTitle">一渡赤水</div>
+            <div class="stage-subtitle" id="stageSubtitle">土城渡口 · 1935年1月29日</div>
+            <div class="stage-divider"></div>
+            <div class="stage-history">
+                <div class="h-title">📖 历史背景</div>
+                <div class="h-content" id="stageHistory"></div>
+                <div class="h-quote" id="stageQuote"></div>
+            </div>
+            <div class="stage-divider"></div>
+            <div class="stage-next-info">
+                <div class="n-label">下一阶段目标</div>
+                <div class="n-target" id="stageNextTarget">→ 扎西</div>
+            </div>
+            <button class="stage-continue-btn" onclick="continueToNextStage()">继续前进 →</button>
+        </div>
+    </div>
+
+    <!-- 游戏结果 -->
+    <div id="gameResult">
+        <div class="result-icon" id="resultIcon"></div>
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-msg" id="resultMsg"></div>
+        <button class="result-btn" onclick="restartGame()">再来一次</button>
+    </div>
+
+<script>
+// ============ 游戏数据 - 四渡赤水阶段关卡 ============
+const STAGES = [
+    {
+        id: 1,
+        name: '一渡赤水',
+        target: { name: '土城渡口', lat: 28.230, lng: 106.210 },
+        start: { lat: 28.100, lng: 106.350 },
+        // 历史路线：遵义北 → 桐梓 → 松坎 → 温水 → 土城
+        route: [
+            { lat: 28.100, lng: 106.350 },
+            { lat: 28.130, lng: 106.320 },
+            { lat: 28.155, lng: 106.290 },
+            { lat: 28.180, lng: 106.260 },
+            { lat: 28.205, lng: 106.230 },
+            { lat: 28.230, lng: 106.210 }
+        ],
+        routeWidth: 0.055,  // 允许偏离范围（约5-6km）
+        history: '1935年1月，遵义会议后，中央红军向川黔边境挺进。在土城一带，毛泽东决定集中兵力围歼尾追的川军郭勋祺部。但情报有误——敌军实际兵力是情报的两倍，战斗陷入被动。毛泽东果断下令撤出战斗，连夜西渡赤水河，避免了更大损失。',
+        quote: '"打得赢就打，打不赢就走。"——毛泽东',
+        card: {
+            title: '一渡赤水 · 土城 · 1935年1月29日', type: 'orange',
+            intel: '军委二局截获川军电报，郭勋祺部兵力约为2个旅。（实际为4个旅，情报存在误差。）',
+            decision: '毛泽东决定在此打一个追击战，试图围歼尾追之敌。因情报有误，战况不利，红军主动撤出，西渡赤水。',
+            insight: '情报的准确与否，直接决定战局走向。此战后，红军更加重视无线电侦察。'
+        },
+        enemies: [
+            { lat: 28.300, lng: 106.100, name: '川军郭勋祺部' }
+        ]
+    },
+    {
+        id: 2,
+        name: '扎西整编',
+        target: { name: '扎西', lat: 27.840, lng: 105.050 },
+        start: { lat: 28.230, lng: 106.210 },
+        // 历史路线：土城 → 古蔺 → 叙永 → 扎西
+        route: [
+            { lat: 28.230, lng: 106.210 },
+            { lat: 28.210, lng: 106.050 },
+            { lat: 28.180, lng: 105.880 },
+            { lat: 28.120, lng: 105.700 },
+            { lat: 28.050, lng: 105.500 },
+            { lat: 27.960, lng: 105.280 },
+            { lat: 27.880, lng: 105.120 },
+            { lat: 27.840, lng: 105.050 }
+        ],
+        routeWidth: 0.07,
+        history: '红军西渡赤水后进入云南扎西地区。在这里，中央召开了著名的"扎西会议"，精简了军委纵队，提高了行军速度。同时，军委二局截获重要情报：国民党军主力已向贵阳集结，黔北防务空虚。毛泽东敏锐捕捉到这一战机，决定回师东进，二渡赤水。',
+        quote: '"敌进我退，敌驻我扰，敌疲我打，敌退我追。"——游击战十六字诀',
+        card: {
+            title: '二渡赤水前奏 · 扎西 · 1935年2月', type: 'blue',
+            intel: '截获湘军电令：主力已向贵阳集结，黔北空虚。',
+            decision: '决定回师东进，二渡赤水，杀回贵州。',
+            insight: '知己知彼，才能抓住敌人最薄弱的时机。'
+        },
+        enemies: [
+            { lat: 28.050, lng: 105.800, name: '川军追兵' },
+            { lat: 27.900, lng: 105.500, name: '滇军孙渡部' }
+        ]
+    },
+    {
+        id: 3,
+        name: '二渡赤水',
+        target: { name: '遵义', lat: 27.720, lng: 106.930 },
+        start: { lat: 27.840, lng: 105.050 },
+        // 历史路线：扎西 → 太平渡 → 二郎滩 → 桐梓 → 遵义
+        route: [
+            { lat: 27.840, lng: 105.050 },
+            { lat: 27.830, lng: 105.300 },
+            { lat: 27.820, lng: 105.550 },
+            { lat: 27.810, lng: 105.800 },
+            { lat: 27.790, lng: 106.050 },
+            { lat: 27.770, lng: 106.300 },
+            { lat: 27.750, lng: 106.550 },
+            { lat: 27.735, lng: 106.750 },
+            { lat: 27.720, lng: 106.930 }
+        ],
+        routeWidth: 0.07,
+        history: '红军突然东渡赤水，杀回贵州，打了国民党军一个措手不及。2月24日至28日，红军发起遵义战役，5天内歼灭黔军2个师、中央军吴奇伟部1个师，俘敌3000余人，缴获大量武器弹药。这是长征以来红军取得的最大一次胜利，极大鼓舞了士气。',
+        quote: '"四渡赤水出奇兵，毛主席用兵真如神。"——《长征组歌》',
+        card: {
+            title: '二渡赤水 · 遵义战役 · 1935年2月', type: 'orange',
+            intel: '黔军王家烈部士气低落、防务松懈。',
+            decision: '发起遵义战役，5天内歼灭黔军2个师，取得长征以来最大的一次胜利。',
+            insight: '情报找到突破口，一击即中。'
+        },
+        enemies: [
+            { lat: 27.600, lng: 106.000, name: '黔军王家烈部' },
+            { lat: 27.800, lng: 106.500, name: '中央军吴奇伟部' }
+        ]
+    },
+    {
+        id: 4,
+        name: '三渡、四渡赤水',
+        target: { name: '乌江渡口', lat: 27.350, lng: 107.050 },
+        start: { lat: 27.720, lng: 106.930 },
+        // 历史路线：遵义 → 茅台（三渡） → 二郎滩（四渡） → 息烽 → 乌江
+        route: [
+            { lat: 27.720, lng: 106.930 },
+            { lat: 27.760, lng: 106.780 },
+            { lat: 27.810, lng: 106.600 },
+            { lat: 27.860, lng: 106.420 },
+            { lat: 27.890, lng: 106.250 },
+            { lat: 27.870, lng: 106.100 },
+            { lat: 27.820, lng: 106.000 },
+            { lat: 27.750, lng: 106.100 },
+            { lat: 27.650, lng: 106.250 },
+            { lat: 27.550, lng: 106.420 },
+            { lat: 27.460, lng: 106.600 },
+            { lat: 27.390, lng: 106.800 },
+            { lat: 27.350, lng: 107.050 }
+        ],
+        routeWidth: 0.065,
+        history: '遵义战役后，蒋介石亲赴贵阳督战，调集重兵围剿。毛泽东将计就计，三渡赤水佯装北渡长江，诱使敌军主力西调；随即四渡赤水，南下突破乌江，佯攻贵阳。蒋介石急调滇军救驾，红军却乘虚西进云南，彻底跳出了数十万敌军的包围圈。',
+        quote: '"用兵之法，全在以迂为直，以患为利。"——《孙子兵法》',
+        card: {
+            title: '四渡赤水 · 乌江 · 1935年3月', type: 'blue',
+            intel: '侦知贵阳城内兵力空虚，蒋介石正在贵阳坐镇。',
+            decision: '佯装进攻贵阳，调动滇军东出，我军乘隙西进云南。',
+            insight: '用一个虚招调动敌军主力，实现战略转向。'
+        },
+        enemies: [
+            { lat: 27.500, lng: 106.800, name: '中央军周浑元部' },
+            { lat: 27.600, lng: 107.200, name: '湘军刘建绪部' },
+            { lat: 27.400, lng: 106.900, name: '黔军残部' }
+        ]
+    }
+];
+
+const START_POS = STAGES[0].start;
+const END_POS = STAGES[STAGES.length - 1].target;
+
+
+
+// ============ 游戏配置 ============
+const CFG = {
+    moveSpeed: 0.003,       // 红军每帧移动度数（~330m/帧@60fps）
+    enemyBaseSpeed: 0.0018, // 敌军基础速度
+    enemyInertiaDecay: 0.82,// 转向时惯性衰减
+    enemyConfuseThreshold: 0.25,
+    landmarkTriggerDist: 800,  // 触发距离（米）
+    enemyCatchDist: 300,       // 被抓住距离（米）
+    zoomLevel: 11
+};
+
+// ============ 游戏状态 ============
+let map, redMarker, targetMarker;
+let enemyMarkers = [];
+let enemyStates = [];
+let trailLine;
+let trailPoints = [];
+let gameStarted = false;
+let gamePaused = false;
+let gameOver = false;
+let keysPressed = {};
+let redPos = { ...START_POS };
+let pendingCard = null;
+let triggerTimer = null;
+let lastTime = 0;
+let turnCount = 0;
+let lastDirection = null;
+let currentStageIndex = 0;
+let completedStages = [];
+let stageTargetMarker = null;
+let stageCompletedMarkers = [];
+let routeLine = null;
+let deviationWarningShown = false;
+
+// ============ 初始化地图 ============
+function initMap() {
+    map = L.map('map', {
+        center: [redPos.lat, redPos.lng],
+        zoom: CFG.zoomLevel,
+        zoomControl: false,
+        attributionControl: false,
+        minZoom: 9,
+        maxZoom: 15
+    });
+
+    // 高德地图卫星影像瓦片
+    L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {
+        subdomains: '1234',
+        maxZoom: 18
+    }).addTo(map);
+
+    // 高德地图标注图层（叠加在卫星图上）
+    L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}', {
+        subdomains: '1234',
+        maxZoom: 18
+    }).addTo(map);
+
+    // 添加缩放控件
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // 绘制赤水河（真实走向）
+    const chishuiRiver = [
+        [27.55, 105.30], [27.62, 105.42], [27.68, 105.55],
+        [27.72, 105.68], [27.78, 105.80], [27.82, 105.92],
+        [27.88, 106.00], [27.95, 106.08], [28.02, 106.12],
+        [28.10, 106.15], [28.18, 106.18], [28.25, 106.20],
+        [28.32, 106.22], [28.38, 106.28], [28.42, 106.35],
+        [28.48, 106.42], [28.55, 106.48], [28.62, 106.55],
+        [28.68, 106.62], [28.72, 106.70], [28.78, 106.78],
+        [28.82, 106.85], [28.88, 106.92], [28.92, 107.00],
+        [28.95, 107.08], [28.98, 107.15], [29.02, 107.22]
+    ];
+    L.polyline(chishuiRiver, {
+        color: '#2980B9', weight: 4, opacity: 0.7, smoothFactor: 1
+    }).addTo(map);
+    // 赤水河标注
+    L.marker([28.50, 106.45], {
+        icon: L.divIcon({
+            className: '',
+            html: '<div style="color:#2980B9;font-size:13px;font-weight:bold;text-shadow:0 0 4px #fff,0 0 4px #fff,1px 1px 2px rgba(0,0,0,0.5);white-space:nowrap;transform:rotate(-15deg);">赤水河</div>',
+            iconSize: [60, 20], iconAnchor: [30, 10]
+        })
+    }).addTo(map);
+
+    // 绘制红军标记
+    redMarker = L.marker([redPos.lat, redPos.lng], {
+        icon: createArmyIcon('red', '红'),
+        zIndexOffset: 1000
+    }).addTo(map);
+
+    // 轨迹线
+    trailLine = L.polyline([], {
+        color: '#C82829', weight: 2, opacity: 0.5, dashArray: '6,4'
+    }).addTo(map);
+
+    // 初始化当前阶段
+    initCurrentStage();
+}
+
+// ============ 初始化当前阶段 ============
+function initCurrentStage() {
+    const stage = STAGES[currentStageIndex];
+    
+    // 清除旧的目标标记和敌人
+    if (stageTargetMarker) {
+        map.removeLayer(stageTargetMarker);
+    }
+    enemyMarkers.forEach(m => map.removeLayer(m));
+    enemyMarkers = [];
+    enemyStates = [];
+
+    // 清除旧路线
+    if (routeLine) {
+        map.removeLayer(routeLine);
+        routeLine = null;
+    }
+
+    // 绘制历史路线（虚线，半透明红色）
+    const routeCoords = stage.route.map(p => [p.lat, p.lng]);
+    routeLine = L.polyline(routeCoords, {
+        color: '#E74C3C', weight: 3, opacity: 0.35,
+        dashArray: '8,6', smoothFactor: 1
+    }).addTo(map);
+
+    // 绘制当前阶段目标
+    stageTargetMarker = L.marker([stage.target.lat, stage.target.lng], {
+        icon: L.divIcon({
+            className: '',
+            html: `<div style="background:#8E44AD;color:#fff;padding:4px 10px;border-radius:4px;font-size:13px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);border:2px solid #fff;">${stage.target.name}</div>`,
+            iconSize: [80, 28], iconAnchor: [40, 14]
+        })
+    }).addTo(map);
+
+    // 绘制当前阶段的敌人
+    stage.enemies.forEach((enemy, i) => {
+        const marker = L.marker([enemy.lat, enemy.lng], {
+            icon: createArmyIcon('enemy', '敌'),
+            zIndexOffset: 500
+        }).addTo(map);
+        enemyMarkers.push(marker);
+        enemyStates.push({
+            lat: enemy.lat, lng: enemy.lng,
+            dirLat: 0, dirLng: 0,
+            inertia: 1.0,
+            confused: false,
+            name: enemy.name
+        });
+    });
+
+    // 移动地图到当前位置
+    map.panTo([redPos.lat, redPos.lng]);
+
+    // 更新UI
+    deviationWarningShown = false;
+    updateStageUI();
+}
+
+function createArmyIcon(type, text) {
+    const size = type === 'red' ? 32 : 28;
+    const cls = type === 'red' ? 'red-marker' : 'enemy-marker';
+    return L.divIcon({
+        className: '',
+        html: `<div class="army-marker ${cls}" style="width:${size}px;height:${size}px;">${text}</div>`,
+        iconSize: [size, size], iconAnchor: [size/2, size/2]
+    });
+}
+
+// ============ 距离计算 ============
+function distMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ============ 路线偏离检测 ============
+// 计算点到折线的最短距离（经纬度单位）
+function distToRoute(lat, lng, route) {
+    let minDist = Infinity;
+    for (let i = 0; i < route.length - 1; i++) {
+        const p1 = route[i], p2 = route[i+1];
+        const dx = p2.lng - p1.lng, dy = p2.lat - p1.lat;
+        const lenSq = dx*dx + dy*dy;
+        if (lenSq === 0) continue;
+        let t = ((lat - p1.lat) * dy + (lng - p1.lng) * dx) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        const nearestLat = p1.lat + t * dy;
+        const nearestLng = p1.lng + t * dx;
+        const dLat = lat - nearestLat, dLng = lng - nearestLng;
+        const d = Math.sqrt(dLat*dLat + dLng*dLng);
+        if (d < minDist) minDist = d;
+    }
+    return minDist;
+}
+
+function checkDeviation() {
+    if (gameOver || deviationWarningShown) return;
+    const stage = STAGES[currentStageIndex];
+    const deviation = distToRoute(redPos.lat, redPos.lng, stage.route);
+    if (deviation > stage.routeWidth) {
+        deviationWarningShown = true;
+        gameOver = true;
+        showResult(false, 'route');
+    }
+}
+
+// ============ 游戏主循环 ============
+function gameLoop(timestamp) {
+    if (!gameStarted || gamePaused || gameOver) {
+        lastTime = timestamp;
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
+    const dt = Math.min((timestamp - lastTime) / 16.67, 3); // 标准化到60fps
+    lastTime = timestamp;
+
+    // 处理红军移动
+    let dLat = 0, dLng = 0;
+    if (keysPressed['ArrowUp'] || keysPressed['w'] || keysPressed['W']) dLat += 1;
+    if (keysPressed['ArrowDown'] || keysPressed['s'] || keysPressed['S']) dLat -= 1;
+    if (keysPressed['ArrowLeft'] || keysPressed['a'] || keysPressed['A']) dLng -= 1;
+    if (keysPressed['ArrowRight'] || keysPressed['d'] || keysPressed['D']) dLng += 1;
+
+    if (dLat !== 0 || dLng !== 0) {
+        // 对角移动时归一化
+        const len = Math.sqrt(dLat*dLat + dLng*dLng);
+        dLat = (dLat / len) * CFG.moveSpeed * dt;
+        dLng = (dLng / len) * CFG.moveSpeed * dt;
+
+        // 检测转向
+        const currentDir = Math.atan2(dLng, dLat);
+        if (lastDirection !== null && Math.abs(currentDir - lastDirection) > 0.5) {
+            turnCount++;
+            if (turnCount % 3 === 0) {
+                showMaoSpeech(['再拖他们一段！', '声东击西！', '好！继续拉扯！', '牵着他们鼻子走！'][Math.floor(Math.random()*4)]);
+            }
+        }
+        lastDirection = currentDir;
+
+        redPos.lat += dLat;
+        redPos.lng += dLng;
+
+        // 记录轨迹
+        if (trailPoints.length === 0 || distMeters(trailPoints[trailPoints.length-1][0], trailPoints[trailPoints.length-1][1], redPos.lat, redPos.lng) > 200) {
+            trailPoints.push([redPos.lat, redPos.lng]);
+            trailLine.setLatLngs(trailPoints);
+        }
+
+        // 地图跟随
+        map.panTo([redPos.lat, redPos.lng], { animate: true, duration: 0.3 });
+        redMarker.setLatLng([redPos.lat, redPos.lng]);
+
+        // 检查胜利（包含地标触发）
+        checkVictory();
+
+        // 检查路线偏离
+        checkDeviation();
+    }
+
+    // 更新敌军AI
+    updateEnemies(dt);
+
+    requestAnimationFrame(gameLoop);
+}
+
+// ============ 敌军AI ============
+function updateEnemies(dt) {
+    enemyStates.forEach((enemy, i) => {
+        // 计算追击方向
+        const dLat = redPos.lat - enemy.lat;
+        const dLng = redPos.lng - enemy.lng;
+        const dist = Math.sqrt(dLat*dLat + dLng*dLng);
+
+        if (dist < 0.0001) return;
+
+        // 目标方向（归一化）
+        const targetDirLat = dLat / dist;
+        const targetDirLng = dLng / dist;
+
+        // 检测方向变化（惯性衰减）
+        const dotProduct = enemy.dirLat * targetDirLat + enemy.dirLng * targetDirLng;
+        if (dotProduct < 0.7) {
+            // 方向明显改变，惯性衰减
+            enemy.inertia *= CFG.enemyInertiaDecay;
+            if (enemy.inertia < CFG.enemyConfuseThreshold && !enemy.confused) {
+                enemy.confused = true;
+                showChiangSpeech('务必堵住红军！');
+                updateEnemyMarker(i);
+            }
+        } else {
+            enemy.inertia = Math.min(enemy.inertia + 0.02 * dt, 1.0);
+        }
+
+        // 平滑过渡方向（惯性效果）
+        const smoothFactor = 0.15 * enemy.inertia;
+        enemy.dirLat = enemy.dirLat * (1 - smoothFactor) + targetDirLat * smoothFactor;
+        enemy.dirLng = enemy.dirLng * (1 - smoothFactor) + targetDirLng * smoothFactor;
+
+        // 归一化
+        const dirLen = Math.sqrt(enemy.dirLat**2 + enemy.dirLng**2);
+        if (dirLen > 0) {
+            enemy.dirLat /= dirLen;
+            enemy.dirLng /= dirLen;
+        }
+
+        // 移动
+        const speed = CFG.enemyBaseSpeed * dt * (enemy.confused ? 0.6 : 1.0);
+        enemy.lat += enemy.dirLat * speed;
+        enemy.lng += enemy.dirLng * speed;
+
+        enemyMarkers[i].setLatLng([enemy.lat, enemy.lng]);
+
+        // 检查是否抓住红军
+        const catchDist = distMeters(enemy.lat, enemy.lng, redPos.lat, redPos.lng);
+        if (catchDist < CFG.enemyCatchDist) {
+            gameOver = true;
+            showResult(false);
+        }
+    });
+
+    updateUI();
+}
+
+function updateEnemyMarker(idx) {
+    const enemy = enemyStates[idx];
+    const size = 28;
+    const cls = enemy.confused ? 'enemy-marker confused' : 'enemy-marker';
+    enemyMarkers[idx].setIcon(L.divIcon({
+        className: '',
+        html: `<div class="army-marker ${cls}" style="width:${size}px;height:${size}px;">敌</div>`,
+        iconSize: [size, size], iconAnchor: [size/2, size/2]
+    }));
+}
+
+// ============ 地标检测（已废弃，现在使用阶段目标） ============
+// 地标检测逻辑已移至 checkVictory() 中
+
+// ============ 胜利检测 ============
+function checkVictory() {
+    if (gameOver) return;
+    const stage = STAGES[currentStageIndex];
+    const dist = distMeters(redPos.lat, redPos.lng, stage.target.lat, stage.target.lng);
+    
+    // 到达当前阶段目标
+    if (dist < CFG.landmarkTriggerDist && !completedStages.includes(stage.id)) {
+        completedStages.push(stage.id);
+        
+        // 标记已完成的目标
+        const completedMarker = L.marker([stage.target.lat, stage.target.lng], {
+            icon: L.divIcon({
+                className: '',
+                html: `<div style="background:#27AE60;color:#fff;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:bold;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">✓ ${stage.target.name}</div>`,
+                iconSize: [70, 24], iconAnchor: [35, 12]
+            })
+        }).addTo(map);
+        stageCompletedMarkers.push(completedMarker);
+        
+        // 移除当前目标标记
+        if (stageTargetMarker) {
+            map.removeLayer(stageTargetMarker);
+            stageTargetMarker = null;
+        }
+
+        // 暂停游戏
+        gamePaused = true;
+
+        // 显示阶段过渡弹窗
+        showStageTransition(stage);
+    }
+}
+
+// ============ 阶段过渡弹窗 ============
+function showStageTransition(stage) {
+    const badgeTexts = ['第一阶段完成', '第二阶段完成', '第三阶段完成', '最终阶段完成'];
+    const badge = badgeTexts[currentStageIndex] || '阶段完成';
+    
+    document.getElementById('stageBadge').textContent = badge;
+    document.getElementById('stageTitle').textContent = stage.name;
+    document.getElementById('stageSubtitle').textContent = stage.target.name + ' · ' + stage.card.title.split('·').pop().trim();
+    document.getElementById('stageHistory').textContent = stage.history;
+    document.getElementById('stageQuote').textContent = stage.quote;
+
+    // 显示下一阶段目标
+    const nextInfo = document.getElementById('stageNextTarget');
+    if (currentStageIndex < STAGES.length - 1) {
+        const nextStage = STAGES[currentStageIndex + 1];
+        nextInfo.textContent = `→ ${nextStage.target.name}（${nextStage.name}）`;
+    } else {
+        nextInfo.textContent = '🎉 全部完成！';
+    }
+
+    document.getElementById('stageOverlay').classList.add('show');
+}
+
+function continueToNextStage() {
+    // 隐藏弹窗
+    document.getElementById('stageOverlay').classList.remove('show');
+
+    // 检查是否完成所有阶段
+    if (currentStageIndex < STAGES.length - 1) {
+        // 进入下一阶段
+        currentStageIndex++;
+        const nextStage = STAGES[currentStageIndex];
+        
+        // 更新红军位置到下一阶段起点
+        redPos.lat = nextStage.start.lat;
+        redPos.lng = nextStage.start.lng;
+        redMarker.setLatLng([redPos.lat, redPos.lng]);
+        
+        // 初始化下一阶段
+        initCurrentStage();
+        showMaoSpeech(`进入${nextStage.name}！继续前进！`);
+    } else {
+        // 游戏胜利
+        gameOver = true;
+        showResult(true);
+    }
+
+    // 恢复游戏
+    gamePaused = false;
+    lastTime = performance.now();
+}
+
+// ============ UI 更新 ============
+function updateUI() {
+    const stage = STAGES[currentStageIndex];
+    const confusedCount = enemyStates.filter(e => e.confused).length;
+    document.getElementById('uiProgress').textContent = `${currentStageIndex + 1} / ${STAGES.length}`;
+    document.getElementById('uiConfused').textContent = `${confusedCount} / ${enemyStates.length}`;
+}
+
+function updateStageUI() {
+    const stage = STAGES[currentStageIndex];
+    document.getElementById('uiStage').textContent = stage.name;
+    document.getElementById('uiProgress').textContent = `${currentStageIndex + 1} / ${STAGES.length}`;
+    document.getElementById('uiConfused').textContent = `0 / ${enemyStates.length}`;
+}
+
+// ============ 知识卡片 ============
+function showCardTrigger(landmark) {
+    pendingCard = landmark.card;
+    const trigger = document.getElementById('cardTrigger');
+    trigger.classList.add('show');
+
+    if (triggerTimer) clearTimeout(triggerTimer);
+    triggerTimer = setTimeout(() => {
+        trigger.classList.remove('show');
+        pendingCard = null;
+    }, 4000);
+
+    trigger.onclick = () => {
+        openCard(pendingCard);
+        trigger.classList.remove('show');
+        if (triggerTimer) clearTimeout(triggerTimer);
+        pendingCard = null;
+    };
+}
+
+function openCard(card) {
+    const header = document.getElementById('cardHeader');
+    header.textContent = card.title;
+    header.className = 'card-header ' + card.type;
+    document.getElementById('cardIntel').textContent = card.intel;
+    document.getElementById('cardDecision').textContent = card.decision;
+    document.getElementById('cardInsight').textContent = card.insight;
+    document.getElementById('knowledgeCard').classList.add('show');
+}
+
+function closeCard() {
+    document.getElementById('knowledgeCard').classList.remove('show');
+}
+
+// ============ 指挥氛围 ============
+function showMaoSpeech(text) {
+    const el = document.getElementById('maoSpeech');
+    el.textContent = text;
+    el.classList.add('show');
+    el._timer && clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function showChiangSpeech(text) {
+    const el = document.getElementById('chiangSpeech');
+    el.textContent = text;
+    el.classList.add('show');
+    el._timer && clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ============ 游戏结果 ============
+function showResult(isWin, reason) {
+    const el = document.getElementById('gameResult');
+    document.getElementById('resultIcon').textContent = isWin ? '🎉' : (reason === 'route' ? '🧭' : '💥');
+    const title = document.getElementById('resultTitle');
+    title.className = 'result-title ' + (isWin ? 'win' : 'lose');
+
+    const confusedCount = enemyStates.filter(e => e.confused).length;
+    if (isWin) {
+        title.textContent = '战略转移成功！';
+        document.getElementById('resultMsg').innerHTML = `
+            <p>你成功指挥红军完成了战略转移！</p>
+            <p>完成阶段：${completedStages.length} / ${STAGES.length} | 调动敌军：${confusedCount} 支</p>
+            <p style="margin-top:12px"><em>"跑得快是本事，看得清是智慧。<br>跑得巧才能牵着敌人走。"</em></p>
+        `;
+    } else if (reason === 'route') {
+        title.textContent = '偏离历史路线...';
+        document.getElementById('resultMsg').innerHTML = `
+            <p>红军偏离了历史行军路线太远！</p>
+            <p>四渡赤水的每一步都经过精密计算——<br>偏离既定路线会暴露行踪，被敌军合围！<br>请沿着虚线提示的历史路线行进。</p>
+            <p style="margin-top:12px;color:#E74C3C;font-weight:bold;">再试一次，注意沿路线前进！</p>
+        `;
+    } else {
+        title.textContent = '被敌军截获...';
+        document.getElementById('resultMsg').innerHTML = `
+            <p>红军被敌军截获了...</p>
+            <p>运动战的核心是"避实击虚"——<br>不要硬拼，利用快速机动调动敌人，寻找空隙穿插！</p>
+            <p style="margin-top:12px;color:#E74C3C;font-weight:bold;">再试一次，你一定能成功！</p>
+        `;
+    }
+    el.classList.add('show');
+}
+
+// ============ 游戏控制 ============
+function showInstructions() {
+    document.getElementById('instructionsOverlay').classList.add('show');
+}
+
+function confirmStart() {
+    document.getElementById('instructionsOverlay').classList.remove('show');
+    startGame();
+}
+
+function startGame() {
+    document.getElementById('startScreen').style.display = 'none';
+    gameStarted = true;
+    initMap();
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+    setTimeout(() => showMaoSpeech('出发！牵着敌人的鼻子走！'), 800);
+}
+
+function pauseGame() {
+    gamePaused = true;
+    document.getElementById('pauseMenu').classList.add('show');
+}
+
+function resumeGame() {
+    gamePaused = false;
+    document.getElementById('pauseMenu').classList.remove('show');
+    lastTime = performance.now();
+}
+
+function restartGame() {
+    // 重置状态
+    redPos = { ...START_POS };
+    trailPoints = [];
+    turnCount = 0;
+    lastDirection = null;
+    gameOver = false;
+    gamePaused = false;
+    keysPressed = {};
+    currentStageIndex = 0;
+    completedStages = [];
+    deviationWarningShown = false;
+
+    // 清除所有标记
+    if (stageTargetMarker) { map.removeLayer(stageTargetMarker); stageTargetMarker = null; }
+    stageCompletedMarkers.forEach(m => map.removeLayer(m));
+    stageCompletedMarkers = [];
+    enemyMarkers.forEach(m => map.removeLayer(m));
+    enemyMarkers = [];
+    enemyStates = [];
+
+    // 重置红军位置
+    if (redMarker) redMarker.setLatLng([redPos.lat, redPos.lng]);
+    if (trailLine) trailLine.setLatLngs([]);
+    if (map) map.panTo([redPos.lat, redPos.lng]);
+
+    // 隐藏弹窗
+    document.getElementById('pauseMenu').classList.remove('show');
+    document.getElementById('gameResult').classList.remove('show');
+    document.getElementById('knowledgeCard').classList.remove('show');
+    document.getElementById('cardTrigger').classList.remove('show');
+    document.getElementById('stageOverlay').classList.remove('show');
+
+    // 重新初始化当前阶段
+    initCurrentStage();
+    updateUI();
+    lastTime = performance.now();
+}
+
+// ============ 键盘控制 ============
+document.addEventListener('keydown', e => {
+    if (e.key === 'p' || e.key === 'P') {
+        if (gameOver) return;
+        gamePaused ? resumeGame() : pauseGame();
+        return;
+    }
+    keysPressed[e.key] = true;
+    // 阻止方向键滚动页面
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+    }
+});
+
+document.addEventListener('keyup', e => {
+    keysPressed[e.key] = false;
+});
+
+// ============ 触屏控制 ============
+document.querySelectorAll('.dpad-btn').forEach(btn => {
+    const dirMap = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+    const key = dirMap[btn.dataset.dir];
+
+    const startMove = (e) => { e.preventDefault(); keysPressed[key] = true; };
+    const stopMove = (e) => { e.preventDefault(); keysPressed[key] = false; };
+
+    btn.addEventListener('touchstart', startMove, { passive: false });
+    btn.addEventListener('touchend', stopMove, { passive: false });
+    btn.addEventListener('touchcancel', stopMove, { passive: false });
+    btn.addEventListener('mousedown', startMove);
+    btn.addEventListener('mouseup', stopMove);
+    btn.addEventListener('mouseleave', stopMove);
+});
+</script>
+</body>
+</html>

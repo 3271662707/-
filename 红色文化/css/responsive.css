@@ -1,0 +1,411 @@
+/* 响应式样式文件 */
+
+/* 平板设备 (1024px及以下) */
+@media screen and (max-width: 1024px) {
+    :root {
+        --section-padding: 80px;
+        --container-width: 960px;
+    }
+
+    .hero-title {
+        font-size: 56px;
+    }
+
+    .hero-subtitle {
+        font-size: 20px;
+    }
+
+    .section-title {
+        font-size: 40px;
+    }
+
+    .history-visual {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .scene-container,
+    .map-container {
+        height: 350px;
+    }
+
+    .artifacts-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .spirit-values {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .figures-timeline {
+        padding: 20px 0;
+    }
+
+    .figure-card {
+        gap: 30px;
+    }
+
+    .figure-avatar {
+        width: 120px;
+        height: 120px;
+    }
+
+    .avatar-placeholder {
+        font-size: 48px;
+    }
+}
+
+/* 移动设备 (768px及以下) */
+@media screen and (max-width: 768px) {
+    :root {
+        --nav-height: 70px;
+        --section-padding: 60px;
+        --container-width: 100%;
+    }
+
+    /* 导航栏移动端适配 */
+    .nav-container {
+        padding: 0 20px;
+    }
+
+    .nav-logo {
+        font-size: 20px;
+    }
+
+    .logo-icon {
+        font-size: 24px;
+    }
+
+    .nav-menu {
+        gap: 20px;
+    }
+
+    .nav-link {
+        font-size: 14px;
+    }
+
+    /* 首页移动端适配 */
+    .hero-title {
+        font-size: 40px;
+    }
+
+    .hero-subtitle {
+        font-size: 16px;
+        margin-bottom: 30px;
+    }
+
+    .btn-primary {
+        padding: 14px 30px;
+        font-size: 16px;
+    }
+
+    .scroll-indicator {
+        bottom: 20px;
+    }
+
+    /* Section通用样式 */
+    .section {
+        padding: var(--section-padding) 20px;
+    }
+
+    .section-header {
+        margin-bottom: 50px;
+    }
+
+    .section-title {
+        font-size: 32px;
+    }
+
+    .section-subtitle {
+        font-size: 16px;
+    }
+
+    /* 历史场景移动端适配 */
+    .history-card {
+        margin-bottom: 50px;
+    }
+
+    .history-visual {
+        padding: 20px;
+        gap: 20px;
+    }
+
+    .scene-container,
+    .map-container {
+        height: 280px;
+    }
+
+    .scene-info h3 {
+        font-size: 28px;
+    }
+
+    .scene-desc {
+        font-size: 15px;
+    }
+
+    /* 人物志移动端适配 */
+    .figures-timeline {
+        max-width: 100%;
+    }
+
+    .timeline-line {
+        left: 30px;
+    }
+
+    .figure-card {
+        flex-direction: column !important;
+        gap: 20px;
+        margin-bottom: 50px;
+    }
+
+    .figure-avatar {
+        width: 100px;
+        height: 100px;
+        align-self: flex-start;
+        margin-left: 0;
+    }
+
+    .avatar-placeholder {
+        font-size: 40px;
+    }
+
+    .figure-content {
+        padding: 20px;
+    }
+
+    .figure-name {
+        font-size: 26px;
+    }
+
+    .figure-title {
+        font-size: 16px;
+    }
+
+    .figure-bio {
+        font-size: 15px;
+    }
+
+    .figure-quote {
+        font-size: 16px;
+        padding: 12px 15px;
+    }
+
+    /* 文物馆移动端适配 */
+    .artifacts-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .artifact-3d {
+        height: 250px;
+    }
+
+    .artifact-info {
+        padding: 20px;
+    }
+
+    .artifact-info h3 {
+        font-size: 24px;
+    }
+
+    /* 精神传承移动端适配 */
+    .spirit-values {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-bottom: 50px;
+    }
+
+    .value-card {
+        padding: 30px 20px;
+    }
+
+    .value-icon {
+        font-size: 36px;
+    }
+
+    .value-card h3 {
+        font-size: 20px;
+    }
+
+    .value-card p {
+        font-size: 15px;
+    }
+
+    .message-wall {
+        padding: 20px;
+    }
+
+    .message-wall h3 {
+        font-size: 26px;
+        margin-bottom: 20px;
+    }
+
+    /* 页脚移动端适配 */
+    .main-footer {
+        padding: 30px 20px;
+    }
+
+    .footer-content p {
+        font-size: 14px;
+    }
+
+    /* 弹窗移动端适配 */
+    .modal-content {
+        padding: 30px 20px;
+        margin: 20px;
+        max-width: calc(100% - 40px);
+    }
+
+    .modal-close {
+        top: 15px;
+        right: 15px;
+        font-size: 28px;
+    }
+}
+
+/* 小屏移动设备 (480px及以下) */
+@media screen and (max-width: 480px) {
+    .hero-title {
+        font-size: 32px;
+    }
+
+    .hero-subtitle {
+        font-size: 14px;
+    }
+
+    .section-title {
+        font-size: 28px;
+    }
+
+    .nav-menu {
+        gap: 15px;
+    }
+
+    .nav-link {
+        font-size: 13px;
+    }
+
+    .btn-primary {
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+
+    .scene-container,
+    .map-container {
+        height: 240px;
+    }
+
+    .scene-info h3 {
+        font-size: 24px;
+    }
+
+    .figure-avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+    .avatar-placeholder {
+        font-size: 32px;
+    }
+
+    .figure-name {
+        font-size: 22px;
+    }
+
+    .artifact-3d {
+        height: 200px;
+    }
+}
+
+/* 横屏移动设备 */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    .hero-section {
+        min-height: auto;
+        padding: 100px 20px;
+    }
+
+    .hero-title {
+        font-size: 36px;
+    }
+
+    .scroll-indicator {
+        display: none;
+    }
+}
+
+/* 高分辨率屏幕 */
+@media screen and (min-width: 1920px) {
+    :root {
+        --container-width: 1400px;
+    }
+
+    .hero-title {
+        font-size: 80px;
+    }
+
+    .section-title {
+        font-size: 56px;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .main-nav,
+    .scroll-indicator,
+    .hero-canvas,
+    .spirit-particles,
+    .btn-primary,
+    .btn-detail,
+    .btn-submit {
+        display: none;
+    }
+
+    .section {
+        page-break-inside: avoid;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* 深色模式优化 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light-beige: #F5F5DC;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .btn-primary,
+    .btn-detail,
+    .btn-submit {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .nav-link {
+        padding: 12px 0;
+    }
+
+    .figure-card:hover,
+    .artifact-card:hover,
+    .value-card:hover {
+        transform: none;
+    }
+}

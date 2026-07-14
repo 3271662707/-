@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贵州红色文化数字化展示平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <!-- Leaflet 地图库（使用高德地图瓦片，免Key） -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="main-nav" id="mainNav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">★</span>
+                <span class="logo-text">红色贵州</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active">首页</a></li>
+                <li><a href="#history" class="nav-link">历史场景</a></li>
+                <li><a href="#figures" class="nav-link">革命人物</a></li>
+                <li><a href="#artifacts" class="nav-link">红色文物</a></li>
+                <li><a href="#game" class="nav-link">互动体验</a></li>
+                <li><a href="#spirit" class="nav-link">精神传承</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 首页 - 英雄叙事 -->
+    <section id="home" class="section hero-section">
+        <div id="heroCanvas" class="hero-canvas"></div>
+        <div class="hero-overlay">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="title-line" data-text="贵州红色记忆">贵州红色记忆</span>
+                </h1>
+                <p class="hero-subtitle">数字技术重现革命历史 · 科技传承红色精神</p>
+                <div class="hero-cta">
+                    <button class="btn-primary" onclick="scrollToSection('history')">
+                        开始探索
+                        <span class="btn-icon">→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span class="scroll-text">向下滚动</span>
+            <div class="scroll-arrow"></div>
+        </div>
+    </section>
+
+    <!-- 历史场景还原 -->
+    <section id="history" class="section history-section">
+        <div class="section-header">
+            <h2 class="section-title">历史场景还原</h2>
+            <p class="section-subtitle">数字化重现贵州红色经典场景</p>
+        </div>
+
+        <!-- 遵义会议场景 -->
+        <div class="history-card" data-scene="zunyi">
+            <div class="history-visual">
+                <div class="scene-container" id="zunyiScene"></div>
+                <div class="scene-info">
+                    <h3>遵义会议</h3>
+                    <p class="scene-date">1935年1月15日-17日</p>
+                    <p class="scene-location">贵州遵义</p>
+                    <p class="scene-desc">中共中央政治局扩大会议，确立了毛泽东在红军和中共中央的领导地位，是中国共产党历史上生死攸关的转折点。</p>
+                    <button class="btn-detail" onclick="showDetail('zunyi_meeting')">了解详情</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 四渡赤水动态地图 -->
+        <div class="history-card" data-scene="chishui">
+            <div class="history-visual">
+                <div class="map-container">
+                    <div id="amapContainer" style="width: 100%; height: 100%;"></div>
+                </div>
+                <div class="scene-info">
+                    <h3>四渡赤水</h3>
+                    <p class="scene-date">1935年1月19日 - 3月22日</p>
+                    <p class="scene-location">贵州、四川、云南交界</p>
+                    <p class="scene-desc">中央红军在长征途中，处于国民党几十万重兵围追堵截的危急条件下，进行的四次渡赤水河战役，是毛泽东军事生涯中的"得意之笔"。</p>
+                    <button class="btn-detail" onclick="showDetail('four_crossings')">了解详情</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 互动体验 - 四渡赤水游戏 -->
+    <section id="game" class="section game-section">
+        <div class="section-header">
+            <h2 class="section-title">互动体验</h2>
+            <p class="section-subtitle">亲身体验四渡赤水的战略智慧</p>
+        </div>
+        <div class="game-container">
+            <div class="game-intro">
+                <h3>四渡赤水 · 运动战模拟器</h3>
+                <p>指挥红五星在真实地形地图上移动，躲避敌军追击，体验毛泽东军事指挥的"得意之笔"。</p>
+                <ul>
+                    <li>🎯 目标：到达终点星标</li>
+                    <li>🎮 操作：方向键或屏幕按钮</li>
+                    <li>💡 技巧：利用"来回拉扯"调动敌军</li>
+                </ul>
+                <button class="btn-primary" onclick="openGame()">
+                    开始游戏
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+            <div class="game-preview">
+                <div class="game-frame">
+                    <iframe id="gameFrame" src="网页游戏/game.html" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 革命人物志 -->
+    <section id="figures" class="section figures-section">
+        <div class="section-header">
+            <h2 class="section-title">革命人物志</h2>
+            <p class="section-subtitle">缅怀革命先辈 · 传承红色基因</p>
+        </div>
+
+        <div class="figures-timeline">
+            <div class="timeline-line"></div>
+            
+            <div class="figure-card" data-figure="maozedong">
+                <div class="figure-avatar">
+                    <div class="avatar-placeholder">毛</div>
+                </div>
+                <div class="figure-content">
+                    <h3 class="figure-name">毛泽东</h3>
+                    <p class="figure-title">伟大的马克思主义者</p>
+                    <p class="figure-years">1893 - 1976</p>
+                    <p class="figure-bio">中国共产党、中国人民解放军、中华人民共和国的主要缔造者，党的第一代中央领导集体的核心。</p>
+                    <blockquote class="figure-quote">
+                        "星星之火，可以燎原"
+                    </blockquote>
+                    <button class="btn-detail" onclick="showFigureDetail('maozedong')">查看更多</button>
+                </div>
+            </div>
+
+            <div class="figure-card" data-figure="zhouenlai">
+                <div class="figure-avatar">
+                    <div class="avatar-placeholder">周</div>
+                </div>
+                <div class="figure-content">
+                    <h3 class="figure-name">周恩来</h3>
+                    <p class="figure-title">伟大的无产阶级革命家</p>
+                    <p class="figure-years">1898 - 1976</p>
+                    <p class="figure-bio">中国共产党、中国人民解放军、中华人民共和国的主要缔造者之一，伟大的无产阶级革命家、政治家、军事家、外交家。</p>
+                    <blockquote class="figure-quote">
+                        "为中华之崛起而读书"
+                    </blockquote>
+                    <button class="btn-detail" onclick="showFigureDetail('zhouenlai')">查看更多</button>
+                </div>
+            </div>
+
+            <div class="figure-card" data-figure="zhude">
+                <div class="figure-avatar">
+                    <div class="avatar-placeholder">朱</div>
+                </div>
+                <div class="figure-content">
+                    <h3 class="figure-name">朱德</h3>
+                    <p class="figure-title">伟大的无产阶级革命家</p>
+                    <p class="figure-years">1886 - 1976</p>
+                    <p class="figure-bio">中国共产党、中国人民解放军和中华人民共和国的主要缔造者之一，伟大的无产阶级革命家、政治家和军事家。</p>
+                    <blockquote class="figure-quote">
+                        "革命到底，永不叛变"
+                    </blockquote>
+                    <button class="btn-detail" onclick="showFigureDetail('zhude')">查看更多</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 红色文物馆 -->
+    <section id="artifacts" class="section artifacts-section">
+        <div class="section-header">
+            <h2 class="section-title">红色文物馆</h2>
+            <p class="section-subtitle">3D数字化展示革命文物</p>
+        </div>
+
+        <div class="artifacts-grid">
+            <div class="artifact-card" data-artifact="red_army_flag">
+                <div class="artifact-3d" id="flagCanvas"></div>
+                <div class="artifact-info">
+                    <h3>红军战旗</h3>
+                    <p class="artifact-era">1934-1936</p>
+                    <p class="artifact-desc">红军长征时期使用的战旗，见证了红军战士的英勇奋战。</p>
+                    <button class="btn-detail" onclick="showArtifactDetail('red_army_flag')">查看详情</button>
+                </div>
+            </div>
+
+            <div class="artifact-card" data-artifact="oil_lamp">
+                <div class="artifact-3d" id="lampCanvas"></div>
+                <div class="artifact-info">
+                    <h3>马灯</h3>
+                    <p class="artifact-era">1935</p>
+                    <p class="artifact-desc">遵义会议期间使用的马灯，见证了这一历史性时刻。</p>
+                    <button class="btn-detail" onclick="showArtifactDetail('oil_lamp')">查看详情</button>
+                </div>
+            </div>
+
+            <div class="artifact-card" data-artifact="military_map">
+                <div class="artifact-3d" id="mapCanvas"></div>
+                <div class="artifact-info">
+                    <h3>军事地图</h3>
+                    <p class="artifact-era">1935</p>
+                    <p class="artifact-desc">红军长征使用的军事地图，标注了行军路线和战略要点。</p>
+                    <button class="btn-detail" onclick="showArtifactDetail('military_map')">查看详情</button>
+                </div>
+            </div>
+
+            <div class="artifact-card" data-artifact="rifle">
+                <div class="artifact-3d" id="rifleCanvas"></div>
+                <div class="artifact-info">
+                    <h3>红军步枪</h3>
+                    <p class="artifact-era">1934-1936</p>
+                    <p class="artifact-desc">红军战士使用的步枪，是长征途中的重要武器。</p>
+                    <button class="btn-detail" onclick="showArtifactDetail('rifle')">查看详情</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 精神传承 -->
+    <section id="spirit" class="section spirit-section">
+        <div class="section-header">
+            <h2 class="section-title">精神传承</h2>
+            <p class="section-subtitle">红色精神 · 时代传承</p>
+        </div>
+
+        <div class="spirit-content">
+            <div class="spirit-values">
+                <div class="value-card">
+                    <div class="value-icon">★</div>
+                    <h3>坚定信念</h3>
+                    <p>革命理想高于天，坚定不移的共产主义信念</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">★</div>
+                    <h3>实事求是</h3>
+                    <p>一切从实际出发，理论联系实际</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">★</div>
+                    <h3>独立自主</h3>
+                    <p>坚持独立思考，走自己的路</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">★</div>
+                    <h3>服务人民</h3>
+                    <p>全心全意为人民服务，保持同人民群众的血肉联系</p>
+                </div>
+            </div>
+
+            <div class="message-wall">
+                <h3>留言墙</h3>
+                <div class="message-input-area">
+                    <textarea id="messageInput" placeholder="写下您的感悟..." rows="3"></textarea>
+                    <button class="btn-submit" onclick="submitMessage()">提交留言</button>
+                </div>
+                <div class="messages-display" id="messagesDisplay">
+                    <div class="message-item">
+                        <p>传承红色基因，弘扬革命精神！</p>
+                        <span class="message-author">— 参观者</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>贵州红色文化数字化展示平台</p>
+            <p>数字技术重现革命历史 · 科技传承红色精神</p>
+        </div>
+    </footer>
+
+    <!-- 详情弹窗 -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- 引入Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- 引入JavaScript文件 -->
+    <script src="js/particles.js"></script>
+    <script src="js/scene3d.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/amap.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
